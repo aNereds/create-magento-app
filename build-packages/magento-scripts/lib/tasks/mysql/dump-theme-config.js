@@ -1,4 +1,7 @@
 /* eslint-disable no-param-reassign */
+/**
+ * @type {import('listr2').ListrTask<import('../../../typings/context').ListrContext>}
+ */
 const dumpThemeConfig = {
     title: 'Dumping themes and theme configuration',
     task: async (ctx) => {
@@ -10,13 +13,18 @@ const dumpThemeConfig = {
         }
 
         const [themeIdConfig] = await mysqlConnection.query('select * from core_config_data where path = \'design/theme/theme_id\';');
-        if (themeIdConfig.length === 0) {
-            throw new Error('Theme config in core_config_data table is not found.');
+        if (themeIdConfig.length !== 0) {
+            ctx.themeDump = {
+                themes,
+                themeIdConfig: themeIdConfig[0]
+            };
+
+            return;
         }
 
         ctx.themeDump = {
             themes,
-            themeIdConfig: themeIdConfig[0]
+            themeIdConfig: undefined // we don't have a config saved
         };
     }
 };

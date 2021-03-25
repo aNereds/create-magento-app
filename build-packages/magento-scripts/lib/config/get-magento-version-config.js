@@ -4,13 +4,16 @@ const { getConfigFromMagentoVersion } = require('.');
 const getInstalledMagentoVersion = require('../util/get-installed-magento-version');
 const sleep = require('../util/sleep');
 
+/**
+ * @type {import('listr2').ListrTask<import('../../typings/context').ListrContext>}
+ */
 const getMagentoVersion = {
-    // title: 'Getting magento version (300 sec left...)',
-    title: 'Loading Magento version',
+    // title: 'Loading Magento version',
     task: async (ctx, task) => {
         let { magentoVersion } = ctx;
 
         if (!magentoVersion) {
+            task.title = 'Loading Magento version';
             try {
                 magentoVersion = await getInstalledMagentoVersion();
             } catch (e) {
@@ -53,10 +56,10 @@ const getMagentoVersion = {
                     promptSkipper = true;
                 }
             }
+            task.title = `Using Magento ${magentoVersion}`;
         }
 
         ctx.magentoVersion = magentoVersion;
-        task.title = `Using Magento ${magentoVersion}`;
 
         ctx.config = await getConfigFromMagentoVersion(magentoVersion);
     }

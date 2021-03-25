@@ -2,9 +2,13 @@
 const mysql = require('mysql2/promise');
 const sleep = require('../../util/sleep');
 
+/**
+ * @type {import('listr2').ListrTask<import('../../../typings/context').ListrContext>}
+ */
 const connectToMySQL = {
-    title: 'Connect to MySQL server',
+    title: 'Connecting to MySQL server',
     task: async (ctx, task) => {
+        task.title = 'Connecting to MySQL server...';
         const { config: { docker }, ports } = ctx;
         const { mysql: { env } } = docker.getContainers();
         let tries = 0;
@@ -22,8 +26,6 @@ const connectToMySQL = {
                 ctx.mysqlConnection = connection;
                 break;
             } catch (e) {
-                task.output = `Unable to connect to MySQL, retrying... Attempt ${tries}`;
-                task.output = e;
                 //
             }
             await sleep(5000);
@@ -32,7 +34,7 @@ const connectToMySQL = {
             throw new Error('Unable to connect to MySQL server. Check your server configuration!');
         }
 
-        task.title = `MySQL connected${tries > 2 ? ` after ${tries} tries.` : '!'}`;
+        task.title = `MySQL server connected${tries > 2 ? ` after ${tries} tries.` : '!'}`;
     },
     options: {
         bottomBar: 10

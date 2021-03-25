@@ -1,9 +1,13 @@
-/* eslint-disable no-param-reassign */
+/* eslint-disable consistent-return,no-param-reassign */
 const os = require('os');
 const macosVersion = require('macos-version');
 const logger = require('@scandipwa/scandipwa-dev-utils/logger');
 const { platforms, darwinMinimalVersion } = require('../../config');
+const dependencyCheck = require('./dependency');
 
+/**
+ * @type {import('listr2').ListrTask<import('../../../typings/context').ListrContext>}
+ */
 const checkPlatform = {
     title: 'Checking platform',
     task: async (ctx, task) => {
@@ -27,6 +31,8 @@ const checkPlatform = {
         ctx.platformVersion = currentPlatform !== 'darwin' ? os.release() : macosVersion();
 
         task.title = `Running on ${currentPlatform} ${ctx.platformVersion}`;
+
+        return task.newListr([dependencyCheck]);
     }
 };
 

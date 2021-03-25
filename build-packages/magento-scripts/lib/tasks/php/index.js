@@ -6,6 +6,9 @@ const compile = require('./compile');
 const configure = require('./configure');
 const updatePhpBrew = require('./update-phpbrew');
 
+/**
+ * @type {import('listr2').ListrTask<import('../../../typings/context').ListrContext>}
+ */
 const installPhp = {
     title: 'Install PHP',
     task: async (ctx, task) => {
@@ -13,18 +16,9 @@ const installPhp = {
         const phpBinExists = await pathExists(php.binPath);
 
         if (phpBinExists) {
-            task.title = `Using PHP version ${php.version}, checking extensions...`;
+            task.title = `Using PHP version ${php.version}`;
 
-            return task.newListr([
-                configure
-            ], {
-                concurrent: false,
-                exitOnError: true,
-                rendererOptions: {
-                    collapse: false
-                },
-                ctx
-            });
+            return;
         }
 
         task.title = `Installing PHP ${php.version}`;
@@ -62,4 +56,8 @@ const installPhp = {
     }
 };
 
-module.exports = { installPhp, compilePhp: compile, configurePhp: configure };
+module.exports = {
+    installPhp,
+    compilePhp: compile,
+    configurePhp: configure
+};

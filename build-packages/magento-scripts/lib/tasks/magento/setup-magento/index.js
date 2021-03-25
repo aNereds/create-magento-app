@@ -11,8 +11,11 @@ const updateEnvPHP = require('../../php/update-env-php');
 const increaseAdminSessionLifetime = require('./increase-admin-session-lifetime');
 const magentoTask = require('../../../util/magento-task');
 
+/**
+ * @type {import('listr2').ListrTask<import('../../../../typings/context').ListrContext>}
+ */
 const setupMagento = {
-    title: 'Setup magento',
+    title: 'Setting up Magento',
     skip: ({ skipSetup }) => skipSetup,
     task: async (ctx, task) => task.newListr([
         flushRedisConfig,

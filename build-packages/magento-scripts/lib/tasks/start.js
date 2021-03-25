@@ -22,6 +22,9 @@ const {
     restoreThemeConfig
 } = require('./mysql');
 
+/**
+ * @type {import('listr2').ListrTask<import('../../../typings/context').ListrContext>}
+ */
 const start = {
     title: 'Starting project',
     task: async (ctx, task) => task.newListr([
@@ -78,20 +81,17 @@ const start = {
         },
         startPhpFpm,
         {
-            title: 'Open browser',
-            task: async ({ ports, noOpen, config: { overridenConfiguration: { host, ssl } } }, task) => {
+            title: 'Opening browser',
+            task: ({ ports, noOpen, config: { overridenConfiguration: { host, ssl } } }, task) => {
                 if (noOpen) {
                     task.skip();
                     return;
                 }
-
                 openBrowser(`${ssl.enabled ? 'https' : 'http'}://${host}${ports.app === 80 ? '' : `:${ports.app}`}/`);
             }
         },
         {
-            task: (ctx) => {
-                ctx.mysqlConnection.destroy();
-            }
+            task: (ctx) => ctx.mysqlConnection.destroy()
         }
     ], {
         concurrent: false,
