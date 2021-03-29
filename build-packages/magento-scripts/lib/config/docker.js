@@ -1,6 +1,8 @@
+const os = require('os');
 const path = require('path');
 const macosVersion = require('macos-version');
 const { isIpAddress } = require('../util/ip');
+const { isWSL } = require('../util/wsl');
 
 module.exports = ({ configuration, ssl, host }, config) => {
     const {
@@ -29,53 +31,56 @@ module.exports = ({ configuration, ssl, host }, config) => {
         },
         elasticsearch: {
             name: `${ prefix }_elasticsearch-data`
-        },
-        nginx: {
+        }
+    };
+
+    const isLinux = os.platform() === 'linux';
+
+    if (macosVersion.isMacOS || isWSL) {
+        volumes.nginx = {
             name: `${ prefix }_nginx-data`,
             opts: {
                 type: 'nfs',
                 device: `${cacheDir}/nginx/conf.d`,
                 o: 'bind'
             }
-        },
-        appPub: {
+        };
+        volumes.appPub = {
             name: `${ prefix }_pub-data`,
             opts: {
                 type: 'nfs',
                 device: `${ path.join(magentoDir, 'pub') }`,
                 o: 'bind'
             }
-        },
-        appSetup: {
+        };
+        volumes.appSetup = {
             name: `${ prefix }_setup-data`,
             opts: {
                 type: 'nfs',
                 device: `${path.join(magentoDir, 'setup')}`,
                 o: 'bind'
             }
-        }
-    };
-
-    const networkToBindTo = isIpAddress(host) ? host : '127.0.0.1';
+        };
+    }
 
     const getContainers = (ports = {}) => {
         const dockerConfig = {
             nginx: {
                 _: 'Nginx',
-                ports: [
-                    `${networkToBindTo}:${ ports.app }:80`
-                ],
+                ports: macosVersion.isMacOS || isWSL ? [
+                    `${isIpAddress(host) ? host : '127.0.0.1'}:${ ports.app }:80`
+                ] : [],
                 healthCheck: {
                     cmd: 'service nginx status'
                 },
                 mountVolumes: [
-                    `${ volumes.nginx.name }:/etc/nginx/conf.d`,
-                    `${ volumes.appPub.name }:${path.join(magentoDir, 'pub')}`,
-                    `${ volumes.appSetup.name }:${path.join(magentoDir, 'setup')}`
+                    `${ isLinux ? `${cacheDir}/nginx/conf.d` : volumes.nginx.name }:/etc/nginx/conf.d`,
+                    `${ isLinux ? `${path.join(magentoDir, 'pub')}` : volumes.appPub.name }:${path.join(magentoDir, 'pub')}`,
+                    `${ isLinux ? `${path.join(magentoDir, 'setup')}` : volumes.appSetup.name }:${path.join(magentoDir, 'setup')}`
                 ],
                 restart: 'on-failure:5',
                 // TODO: use connect instead
-                network: macosVersion.isMacOS ? network.name : 'host',
+                network: macosVersion.isMacOS || isWSL ? network.name : 'host',
                 image: `nginx:${ nginx.version }`,
                 imageDetails: {
                     name: 'nginx',

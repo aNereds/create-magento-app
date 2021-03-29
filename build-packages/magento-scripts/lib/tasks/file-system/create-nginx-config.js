@@ -5,6 +5,7 @@ const setConfigFile = require('../../util/set-config');
 const macosVersion = require('macos-version');
 const pathExists = require('../../util/path-exists');
 const { isIpAddress } = require('../../util/ip');
+const { isWSL } = require('../../util/wsl');
 
 /**
  * @type {import('listr2').ListrTask<import('../../../typings/context').ListrContext>}
@@ -57,6 +58,15 @@ const createNginxConfig = {
 
         const networkToBindTo = isIpAddress(host) ? host : '127.0.0.1';
 
+        let hostMachine;
+
+        if (macosVersion.isMacOS) {
+            hostMachine = 'host.docker.internal';
+        } else if (isWSL) {
+            hostMachine = 'gateway.docker.internal';
+        } else {
+            hostMachine = '127.0.0.1';
+        }
         try {
             await setConfigFile({
                 configPathname: path.join(
@@ -70,8 +80,8 @@ const createNginxConfig = {
                 templateArgs: {
                     ports,
                     mageRoot: baseConfig.magentoDir,
-                    hostMachine: macosVersion.isMacOS ? 'host.docker.internal' : '127.0.0.1',
-                    hostPort: macosVersion.isMacOS ? 80 : ports.app,
+                    hostMachine,
+                    hostPort: macosVersion.isMacOS || isWSL ? 80 : ports.app,
                     config: overridenConfiguration,
                     networkToBindTo
                 }
