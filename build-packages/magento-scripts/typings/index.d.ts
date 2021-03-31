@@ -123,6 +123,15 @@ export interface CMAConfiguration {
          * @default 'developer'
          */
         mode: 'default' | 'developer' | 'production' | 'maintenance'
+
+        /**
+         * Magento Edition configuration
+         *
+         * This field will be only used during Magento installation.
+         *
+         * @default 'community'
+         */
+        edition: 'community' | 'enterprise'
     }
     /**
      *  Custom host for website base url

@@ -1,40 +1,39 @@
+/* eslint-disable no-param-reassign */
 /* eslint-disable consistent-return */
 const os = require('os');
 const osPlatform = require('../../../util/os-platform');
 const archDependenciesCheck = require('./arch');
 const fedoraDependenciesCheck = require('./fedora');
+const centosDependenciesCheck = require('./centos');
 const ubuntuDependenciesCheck = require('./ubuntu');
 const macDependenciesCheck = require('./mac');
 
-/**
- * @type {import('listr2').ListrTask<import('../../../../typings/context').ListrContext>}
- */
-const dependencyCheck = {
-    task: async (ctx, task) => {
-        const currentPlatform = os.platform();
+const dependencyCheck = async () => {
+    const currentPlatform = os.platform();
 
-        if (currentPlatform === 'darwin') {
-            return task.newListr([macDependenciesCheck]);
-        }
+    if (currentPlatform === 'darwin') {
+        return macDependenciesCheck;
+    }
 
-        const { dist } = await osPlatform();
-        switch (dist) {
-        case 'Arch Linux':
-        case 'Manjaro': {
-            return task.newListr([archDependenciesCheck]);
-        }
-        case 'Fedora':
-        case 'CentOS': {
-            return task.newListr([fedoraDependenciesCheck]);
-        }
-        case 'Linux Mint':
-        case 'Ubuntu': {
-            return task.newListr([ubuntuDependenciesCheck]);
-        }
-        default: {
-            //
-        }
-        }
+    const { dist } = await osPlatform();
+    switch (dist) {
+    case 'Arch Linux':
+    case 'Manjaro Linux': {
+        return archDependenciesCheck;
+    }
+    case 'Fedora': {
+        return fedoraDependenciesCheck;
+    }
+    case 'CentOS': {
+        return centosDependenciesCheck;
+    }
+    case 'Linux Mint':
+    case 'Ubuntu': {
+        return ubuntuDependenciesCheck;
+    }
+    default: {
+        // skip check
+    }
     }
 };
 

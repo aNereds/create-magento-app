@@ -15,7 +15,8 @@ const getJsonfileData = require('../../util/get-jsonfile-data');
 const installMagento = {
     title: 'Installing Magento',
     task: async (ctx, task) => {
-        const { magentoVersion, config: { baseConfig } } = ctx;
+        const { magentoVersion, config: { baseConfig, overridenConfiguration } } = ctx;
+
         const isFsMatching = await matchFilesystem(baseConfig.magentoDir, {
             'app/etc': [
                 'env.php'
@@ -31,6 +32,13 @@ const installMagento = {
         }
 
         task.title = 'Creating Magento project...';
+        const {
+            magento: { edition: magentoEdition },
+            magentoVersion: magentoPackageVersion
+        } = overridenConfiguration;
+
+        const magentoProjectPackage = `magento/project-${magentoEdition}-edition`;
+        const magentoProduct = `magento/product-${magentoEdition}-edition`;
 
         if (await pathExists(path.join(baseConfig.magentoDir, 'composer.json'))) {
             const composerData = await getJsonFileData(path.join(baseConfig.magentoDir, 'composer.json'));
@@ -50,8 +58,8 @@ const installMagento = {
                 });
             }
 
-            if (!composerData.require['magento/product-community-edition']) {
-                await runComposerCommand(`require magento/product-community-edition:${magentoVersion}`,
+            if (!composerData.require[magentoProduct]) {
+                await runComposerCommand(`require ${magentoProduct}:${magentoPackageVersion}`,
                     {
                         magentoVersion,
                         callback: (t) => {
@@ -70,12 +78,21 @@ const installMagento = {
             }
         } else {
             const tempDir = path.join(os.tmpdir(), `magento-tmpdir-${Date.now()}`);
+            const installCommand = [
+                'create-project',
+                `--repository=https://repo.magento.com/ ${magentoProjectPackage}=${magentoVersion}`,
+                '--no-install',
+                `"${tempDir}"`
+            ];
+
             await runComposerCommand(
-                `create-project \
-            --repository=https://repo.magento.com/ magento/project-community-edition=${magentoVersion} \
-            --no-install \
-            "${tempDir}"`,
-                { magentoVersion }
+                installCommand.join(' '),
+                {
+                    magentoVersion,
+                    callback: (t) => {
+                        task.output = t;
+                    }
+                }
             );
 
             await moveFile({

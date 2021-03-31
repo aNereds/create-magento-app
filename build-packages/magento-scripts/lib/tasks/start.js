@@ -21,6 +21,7 @@ const {
     fixDB,
     restoreThemeConfig
 } = require('./mysql');
+const getConfigFromConfigFile = require('../config/get-config-from-config-file');
 
 /**
  * @type {import('listr2').ListrTask<import('../../../typings/context').ListrContext>}
@@ -31,11 +32,12 @@ const start = {
         createCacheFolder,
         checkRequirements,
         getMagentoVersionConfig,
+        getConfigFromConfigFile,
         getCachedPorts,
         stopServices,
         stopPhpFpm,
         setPrefix,
-        getMagentoVersionConfig,
+        getConfigFromConfigFile,
         // get fresh ports
         getAvailablePorts,
         saveConfiguration,
@@ -54,7 +56,6 @@ const start = {
             })
         },
         // second is needed to check if php have missing extensions
-        // TODO rewrite to 2 separate tasks
         configurePhp,
         installPrestissimo,
         installMagento,

@@ -1,6 +1,7 @@
-const logger = require('@scandipwa/scandipwa-dev-utils/logger');
+/* eslint-disable consistent-return,no-param-reassign */
 const dependenciesForPlatforms = require('../../../config/dependencies-for-platforms');
 const { execAsyncSpawn } = require('../../../util/exec-async-command');
+const installDependenciesTask = require('../../../util/install-dependencies-task');
 
 const pkgRegex = /^(\S+)\/\S+\s(\S+)\s\S+\s\S+$/i;
 
@@ -9,7 +10,7 @@ const pkgRegex = /^(\S+)\/\S+\s(\S+)\s\S+\s\S+$/i;
  */
 const ubuntuDependenciesCheck = {
     title: 'Checking Ubuntu Linux dependencies',
-    task: async () => {
+    task: async (ctx, task) => {
         const installedDependencies = (await execAsyncSpawn('apt list --installed')).split('\n')
             .filter((pkg) => pkgRegex.test(pkg))
             .map((pkg) => pkg.match(pkgRegex))
@@ -17,17 +18,27 @@ const ubuntuDependenciesCheck = {
 
         const dependenciesToInstall = dependenciesForPlatforms
             .Ubuntu
+            .dependencies
             .filter((dep) => {
                 if (Array.isArray(dep)) {
                     return !dep.some((dp) => installedDependencies.includes(dp));
                 }
 
                 return !installedDependencies.includes(dep);
-            });
+            })
+            .map((dep) => (Array.isArray(dep) ? dep[0] : dep));
 
         if (dependenciesToInstall.length > 0) {
-            throw new Error(`Missing dependencies detected!\n\nYou can install them by running the following command: ${ logger.style.code(`apt-get install ${dependenciesToInstall.map((dep) => (Array.isArray(dep) ? dep[0] : dep)).join(' ') }`)}`);
+            return task.newListr([
+                installDependenciesTask({
+                    platform: 'Ubuntu',
+                    dependenciesToInstall
+                })
+            ]);
         }
+    },
+    options: {
+        bottomBar: 10
     }
 };
 
