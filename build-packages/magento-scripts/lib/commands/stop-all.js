@@ -1,5 +1,6 @@
 /* eslint-disable no-continue, no-await-in-loop, no-restricted-syntax */
 const logger = require('@scandipwa/scandipwa-dev-utils/logger');
+const isInstalledGlobally = require('is-installed-globally');
 const { Listr } = require('listr2');
 const path = require('path');
 const { getProjects } = require('../config/config');
@@ -8,9 +9,15 @@ const pathExists = require('../util/path-exists');
 
 module.exports = (yargs) => {
     yargs.command('stop-all', 'Stop all running applications on your machine.', () => {}, async () => {
-        // if (!isInstalledGlobally) {
-        //     throw new Error('This command works only in global mode.');
-        // }
+        if (!isInstalledGlobally) {
+            throw new Error(`This command works only in global mode.
+To install ${ logger.style.code('magento-scripts') } as global package use the following command:
+${ logger.style.command('npm i -g @scandipwa/magento-scripts') }
+
+And to run this command:
+${ logger.style.command('magento-scripts stop-all')}
+`);
+        }
 
         const allProjects = getProjects();
 
